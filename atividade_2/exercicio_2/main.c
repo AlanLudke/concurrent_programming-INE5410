@@ -32,11 +32,11 @@
 
 int main(int argc, char** argv) {
 
-    
+
     pid_t pid;// cria cópia do processo
 
     int status; // Variável para status do filho
-    
+
     for (int i = 0; i < 2; i++) {
       fflush(stdout);
       pid = fork();
@@ -45,12 +45,12 @@ int main(int argc, char** argv) {
         break;
       }
     }
-    
+
     if (pid > 0) {// é o processo pai
-      
+
       wait(&status);
       printf("Processo principal %d finalizado\n", getpid());
-      
+
     } else if (pid == 0) {// é o processo filho
 
       if(pid == 0) {
@@ -68,8 +68,7 @@ int main(int argc, char** argv) {
       wait(&status);
       printf("Processo %d finalizado\n", getpid());
     }
-    
+
 
     return 0;
 }
-

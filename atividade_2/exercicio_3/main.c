@@ -30,40 +30,50 @@
 
 int main(int argc, char** argv) {
 
-	pid_t pid;
-	printf("Processo pai iniciado\n");
+	pid_t filho;
+	int pidgrep;
+	int pidsed;
+
+	int codgrep;
 	int status;
-	char* encontrou = "não";
+
+	printf("Processo pai iniciado\n");
 
 	for (int i = 0; i < 2; i++) {
-		pid = fork();
-		if (i == 0) {
-			printf("sed PID %d iniciado\n", getpid());
-			execlp("text", "grep silver text", NULL);
-		} else {
-			printf("grep PID %d iniciado\n", getpid());
-			execlp("text", "grep adamantium text", NULL);
-		}
-		if (pid == 0) {
+		fflush(stdout);
+		filho = fork();
+
+		if (filho > 0) {
 			break;
 		}
+
+		if (i == 0) {
+			printf("sed PID %d iniciado\n", getpid());
+			pidsed = getpid();
+
+			fflush(stdout);
+			execlp("sed", "sed", "-i", "s/silver/axamantium/g;s/adamantium/silver/g;s/axamantium/adamantium/g", "text");
+
+		} else {
+			printf("grep PID %d iniciado\n", getpid());
+			pidgrep = getpid();
+
+			fflush(stdout);
+			execlp("grep", "grep", "adamantium", "text");
+		}
 	}
+  if (filho > 0) { //pai
+		while (waitpid(pidsed, &status, 0) >= 0) {}
+		codgrep = WEXITSTATUS(status);
 
-    if (pid > 0) { // é o processo pai
-      
-      wait(&status);
-      printf("grep retornou com código %d,%s encontrou silver\n", status, encontrou);
-      
-    } else if (pid == 0) {// é o processo filho
-    	if(status == 0) {
-    		printf("grep retornou com código 0, encontrou adamantium\n");
-    	} else {
-    		printf("grep retornou com código %d, não encontrou adamantium\n", status);
-    	}
+		waitpid(pidgrep, &status, 0);
 
-    } else {
-    	printf("Erro %d na criação do processo filho\n", pid);
-    }
-    
-    return 0;
+		if (codgrep == 0) {
+			printf("grep retornou com código %d, encontrou adamantium\n", codgrep);
+		} else {
+			codgrep = codgrep % 3;
+			printf("grep retornou com código %d, não encontrou adamantium\n", codgrep);
+		}
+  }
+	return status;
 }
