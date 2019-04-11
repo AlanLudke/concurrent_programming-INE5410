@@ -22,22 +22,25 @@
 int main(int argc, char** argv) {
 
     int pid = fork();// cria cópia do processo
-    int status; // Variável para status do filho
+    int status; 
 
-    if (pid > 0) {// é o processo pai
-      pid = fork();
+    if (pid > 0) {
+      for (int i = 0; i < 2; ++i) {
+        pid = fork();
 
-      if (pid > 0) {// é o processo pai
-        while(wait(&status) >= 0);
-        printf("Processo pai finalizado!\n");
-      } else if (pid == 0) {// é o processo filho
-        printf("Processo pai criou %d\n", getpid());
-        printf("Processo filho %d criado\n", getpid());
+        if (pid == 0) {
+          printf("Processo filho %d criado\n", getpid());
+          break;
+        }
       }
 
-    } else if (pid == 0) {// é o processo filho
-      printf("Processo pai criou %d\n", getpid());
-      printf("Processo filho %d criado\n", getpid());
+      if (pid > 0) {
+        while(wait(&status) >= 0);
+        printf("Processo pai finalizado!\n");
+
+      } else if (pid == 0) {
+        printf("Processo pai criou %d\n", getpid());
+      }
 
     }
     return 0;

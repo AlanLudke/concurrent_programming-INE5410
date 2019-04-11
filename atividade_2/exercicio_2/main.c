@@ -46,12 +46,12 @@ int main(int argc, char** argv) {
       }
     }
 
-    if (pid > 0) {// é o processo pai
+    if (pid > 0) {
 
-      wait(&status);
+      while(wait(&status) >= 0);
       printf("Processo principal %d finalizado\n", getpid());
 
-    } else if (pid == 0) {// é o processo filho
+    } else if (pid == 0) {
 
       if(pid == 0) {
         for (int i = 0; i < 3; i++) {
@@ -62,6 +62,8 @@ int main(int argc, char** argv) {
             break;
           }
         }
+      } else if (pid > 0) {
+        while(wait(&status) >= 0);
       }
       printf("Processo %d, filho de %d\n", getpid(), getppid());
       sleep(5);
