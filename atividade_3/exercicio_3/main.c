@@ -16,6 +16,10 @@
 double* load_vector(const char* filename, int* out_size);
 
 
+// Avalia se o prod_escalar é o produto escalar dos vetores a e b. Assume-se
+// que ambos a e b sejam vetores de tamanho size.
+void avaliar(double* a, double* b, int size, double prod_escalar);
+
 int main(int argc, char* argv[]) {
     srand(time(NULL));
 
