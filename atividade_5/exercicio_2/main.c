@@ -11,6 +11,9 @@ void consumir(int produto); //< definida em helper.c
 void *produtor_func(void *arg);
 void *consumidor_func(void *arg);
 
+sem_t sem_produzir;
+sem_t sem_consumir;
+
 int indice_produtor, indice_consumidor, tamanho_buffer;
 int* buffer;
 
@@ -24,18 +27,25 @@ void *produtor_func(void *arg) {
         int produto;
         if (i == max)
             produto = -1;          //envia produto sinlizando FIM
-        else 
+        else
             produto = produzir(i); //produz um elemento normal
+
+        sem_wait(&sem_produzir);
         indice_produtor = (indice_produtor + 1) % tamanho_buffer; //calcula posição próximo elemento
         buffer[indice_produtor] = produto; //adiciona o elemento produzido à lista
+        sem_post(&sem_consumir);
+
     }
     return NULL;
 }
 
 void *consumidor_func(void *arg) {
     while (1) {
+        sem_wait(&sem_consumir);
         indice_consumidor = (indice_consumidor + 1) % tamanho_buffer; //Calcula o próximo item a consumir
         int produto = buffer[indice_consumidor]; //obtém o item da lista
+        sem_post(&sem_produzir);
+
         //Podemos receber um produto normal ou um produto especial
         if (produto >= 0)
             consumir(produto); //Consome o item obtido.
@@ -68,10 +78,34 @@ int main(int argc, char *argv[]) {
     // consumam.
 
     // ....
-    
+
+    pthread_t threads_produtores[n_produtores];
+    pthread_t threads_consumidores[n_consumidores];
+
+    sem_init(&sem_produzir, 0, tamanho_buffer);
+    sem_init(&sem_consumir, 0, 0);
+
+    for (size_t i = 0; i < n_produtores; i++) {
+      pthread_create(&threads_produtores[i], NULL, produtor_func, &itens);
+    }
+
+    for (size_t i = 0; i < n_consumidores; i++) {
+      pthread_create(&threads_consumidores[i], NULL, consumidor_func, NULL);
+    }
+
+    for (size_t i = 0; i < n_produtores; i++) {
+      pthread_join(threads_produtores[i], NULL);
+    }
+
+    for (size_t i = 0; i < n_consumidores; i++) {
+      pthread_join(threads_consumidores[i], NULL);
+    }
+
+    sem_destroy(&sem_produzir);
+    sem_destroy(&sem_consumir);
+
     //Libera memória do buffer
     free(buffer);
 
     return 0;
 }
-
