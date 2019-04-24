@@ -14,6 +14,8 @@ void *consumidor_func(void *arg);
 sem_t sem_produzir;
 sem_t sem_consumir;
 
+pthread_mutex_t mutex;
+
 int indice_produtor, indice_consumidor, tamanho_buffer;
 int* buffer;
 
@@ -31,10 +33,11 @@ void *produtor_func(void *arg) {
             produto = produzir(i); //produz um elemento normal
 
         sem_wait(&sem_produzir);
+        pthread_mutex_lock(&mutex);
         indice_produtor = (indice_produtor + 1) % tamanho_buffer; //calcula posição próximo elemento
         buffer[indice_produtor] = produto; //adiciona o elemento produzido à lista
+        pthread_mutex_unlock(&mutex);
         sem_post(&sem_consumir);
-
     }
     return NULL;
 }
@@ -42,14 +45,20 @@ void *produtor_func(void *arg) {
 void *consumidor_func(void *arg) {
     while (1) {
         sem_wait(&sem_consumir);
+        pthread_mutex_lock(&mutex);
         indice_consumidor = (indice_consumidor + 1) % tamanho_buffer; //Calcula o próximo item a consumir
         int produto = buffer[indice_consumidor]; //obtém o item da lista
+        pthread_mutex_unlock(&mutex);
         sem_post(&sem_produzir);
 
         //Podemos receber um produto normal ou um produto especial
-        if (produto >= 0)
-            consumir(produto); //Consome o item obtido.
-        else
+        if (produto >= 0){
+            if(buffer != NULL){
+              consumir(produto); //Consome o item obtido.
+            } else {
+              //wait();
+            }
+        } else
             break; //produto < 0 é um sinal de que o consumidor deve parar
     }
     return NULL;
@@ -78,6 +87,8 @@ int main(int argc, char *argv[]) {
     // consumam.
 
     // ....
+    pthread_mutex_init(&mutex, NULL); // Inicializa o mutex destravado
+
 
     pthread_t threads_produtores[n_produtores];
     pthread_t threads_consumidores[n_consumidores];
@@ -100,6 +111,8 @@ int main(int argc, char *argv[]) {
     for (size_t i = 0; i < n_consumidores; i++) {
       pthread_join(threads_consumidores[i], NULL);
     }
+
+    pthread_mutex_destroy(&mutex);
 
     sem_destroy(&sem_produzir);
     sem_destroy(&sem_consumir);
