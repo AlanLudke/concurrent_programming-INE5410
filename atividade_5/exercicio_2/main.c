@@ -91,7 +91,13 @@ int main(int argc, char *argv[]) {
 
 
     pthread_t threads_produtores[n_produtores];
+
+    if (n_consumidores > n_produtores) {
+        n_consumidores = n_produtores;
+    }
+
     pthread_t threads_consumidores[n_consumidores];
+
 
     sem_init(&sem_produzir, 0, tamanho_buffer);
     sem_init(&sem_consumir, 0, 0);
@@ -108,7 +114,7 @@ int main(int argc, char *argv[]) {
       pthread_join(threads_produtores[i], NULL);
     }
 
-    for (size_t i = 0; i < n_consumidores; i++) {
+    for (size_t i = 0; i < n_produtores; i++) {
       pthread_join(threads_consumidores[i], NULL);
     }
 
