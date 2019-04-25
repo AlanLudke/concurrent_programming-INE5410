@@ -5,20 +5,6 @@
 
 int gValue = 0;
 pthread_mutex_t gMtx;
-pthread_mutexattr_t attrs;
-
-/*
-
-Como criar um mutex recursivo em pthreads:
-
-
-- Aloque uma variável attrs do tipo pthread_mutexattr_t; 
-- Inicialize attrs usando pthread_mutexattr_init(&attrs); 
-- Sete o tipo do mutex para PTHREAD_MUTEX_RECURSIVE usando pthread_mutexattr_settype(); 
-- Inicialize o mutex com os atributes em attrs usando pthread_mutex_init(); 
-- Por fim, destrua attrs usando pthread_mutexattr_destroy().
-
-*/
 
 // Função imprime resultados na correção do exercício -- definida em helper.c
 void imprimir_resultados(int n, int** results);
@@ -26,31 +12,29 @@ void imprimir_resultados(int n, int** results);
 // Função escrita por um engenheiro
 void compute(int arg) {
     if (arg < 2) {
-        pthread_mutex_lock(&gMtx);
+        //pthread_mutex_lock(&gMtx);
         gValue += arg;
-        pthread_mutex_unlock(&gMtx);
+        //pthread_mutex_unlock(&gMtx);
     } else {
         compute(arg - 1);
         compute(arg - 2);
     }
 }
 
-// Função wrapper que pode ser usada com pthread_create() para criar uma 
+// Função wrapper que pode ser usada com pthread_create() para criar uma
 // thread que retorna o resultado de compute(arg
 void* compute_thread(void* arg) {
     int* ret = malloc(sizeof(int));
-    pthread_mutex_lock(attrs);
+    pthread_mutex_lock(&gMtx);
     gValue = 0;
     compute(*((int*)arg));
     *ret = gValue;
-    pthread_mutex_unlock(attrs);
+    pthread_mutex_unlock(&gMtx);
     return ret;
 }
 
 
 int main(int argc, char** argv) {
-
-
     // Temos n_threads?
     if (argc < 2) {
         printf("Uso: %s n_threads x1 x2 ... xn\n", argv[0]);
@@ -64,14 +48,7 @@ int main(int argc, char** argv) {
     }
 
     //Inicializa o mutex
-    
-    pthread_mutexattr_init(&attrs);
-    pthread_mutexattr_settype(PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutex_init(attrs);
-
-
-
-    //pthread_mutex_init(&gMtx);
+    pthread_mutex_init(&gMtx, NULL);
 
     int args[n_threads];
     int* results[n_threads];
@@ -86,16 +63,15 @@ int main(int argc, char** argv) {
         pthread_join(threads[i], (void**)&results[i]);
 
     // Não usaremos mais o mutex
-    //pthread_mutex_destroy(&gMtx);
-    pthread_mutex_destroy(&attrs);
+    pthread_mutex_destroy(&gMtx);
 
     // Imprime resultados na tela
     // Importante: deve ser chamada para que a correção funcione
     imprimir_resultados(n_threads, results);
 
     // Faz o free para os resultados criados nas threads
-    for (int i = 0; i < n_threads; ++i) 
+    for (int i = 0; i < n_threads; ++i)
         free(results[i]);
-    
+
     return 0;
 }
