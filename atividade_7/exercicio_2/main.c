@@ -14,13 +14,12 @@ void init_matrix(double* m, int rows, int columns) {
 void mult_matrix(double* out, double* left, double *right,
                  int rows_left, int cols_left, int cols_right) {
     int i, j, k;
-    #pragma omp parallel for schedule(static) // faz com que muitas "viagens" sejam realizadas. Muito tempo será gasto para que cada thread execute 1 linha
+    #pragma omp parallel for private(j,k) schedule(dynamic, 1) //private faz com que cada thread tenha uma cópia de j e k
+    //divido para que cada thread pegue um chunk de cada vez de forma dinamica
     for (i = 0; i < rows_left; ++i) {
         for (j = 0; j < cols_right; ++j) {
             out[i*cols_right+j] = 0; //zero o elemento
-            #pragma omp parallel shared(left, right)
-            #pragma omp parallel for schedule(static) reduction(+:out[i*cols_right+j])
-            for (k = 0; k < cols_left; ++k)
+            for (k = 0; k < cols_left; ++k)// faz com que muitas "viagens" sejam realizadas. Muito tempo será gasto para que cada thread execute 1 linha
                 out[i*cols_right+j] += left[i*cols_left+k]*right[k*cols_right+j];
         }
     }
